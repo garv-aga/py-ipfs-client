@@ -9,7 +9,7 @@ packages = [
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
 multiaddr = "^0.0.9"
 appdirs = "^1.4.4"
 idna = "^3.4"
