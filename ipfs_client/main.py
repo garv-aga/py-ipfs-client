@@ -1,14 +1,13 @@
 import sys
 import os
 
-import utils.addr as addr_util
-from pooler.settings.config import settings
-from default_logger import logger
-from dag import DAGSection
-from dag import IPFSAsyncClientError
+import ipfs_client.utils.addr as addr_util
+from ipfs_client.default_logger import logger
+from ipfs_client.dag import DAGSection
+from ipfs_client.dag import IPFSAsyncClientError
 from httpx import AsyncClient, Timeout, Limits, AsyncHTTPTransport
-from dag import DAGSection, IPFSAsyncClientError
-from settigns.data_models import IPFSConfig
+from ipfs_client.dag import DAGSection, IPFSAsyncClientError
+from ipfs_client.settings.data_models import IPFSConfig
 import json
 import asyncio
 
@@ -32,14 +31,14 @@ class AsyncIPFSClient:
         if not self._client:
             self._async_transport = AsyncHTTPTransport(
                 limits=Limits(
-                    max_connections=settings.connection_limits.max_connections, 
-                    max_keepalive_connections=settings.connection_limits.max_connections, 
-                    keepalive_expiry=settings.connection_limits.keepalive_expiry
+                    max_connections=self._settings.connection_limits.max_connections, 
+                    max_keepalive_connections=self._settings.connection_limits.max_connections, 
+                    keepalive_expiry=self._settings.connection_limits.keepalive_expiry
                 )
             )
             self._client = AsyncClient(
                 base_url=self._base_url,
-                timeout=Timeout(settings.timeout),
+                timeout=Timeout(self._settings.timeout),
                 follow_redirects=False,
                 transport=self._async_transport
             )
@@ -97,9 +96,9 @@ class AsyncIPFSClient:
 
 
 class AsyncIPFSClientSingleton:
-    def __init__(self):
-        self._ipfs_write_client = AsyncIPFSClient(addr=settings.url)
-        self._ipfs_read_client = AsyncIPFSClient(addr=settings.reader_url)
+    def __init__(self, settings: IPFSConfig):
+        self._ipfs_write_client = AsyncIPFSClient(addr=settings.url, settings=settings)
+        self._ipfs_read_client = AsyncIPFSClient(addr=settings.reader_url, settings=settings)
         self._initialized = False
 
     async def init_sessions(self):

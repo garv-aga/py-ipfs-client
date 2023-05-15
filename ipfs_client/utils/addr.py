@@ -4,7 +4,7 @@ from multiaddr.protocols import (
 )
 import multiaddr
 import multiaddr.exceptions
-from ..exceptions import AddressError
+from ipfs_client.exceptions import AddressError
 import typing as ty
 import socket
 import urllib
