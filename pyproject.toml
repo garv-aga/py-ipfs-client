@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Powerloom Inc."]
 packages = [
-    { include = "ipfs_client/*.py" },
+    { include = "ipfs_client" },
 ]
 readme = "README.md"
 
