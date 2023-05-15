@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "ifps-client"
+version = "0.1.0"
+description = ""
+authors = ["Powerloom Inc."]
+packages = [
+    { include = "ipfs-client/*.py" },
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+multiaddr = "^0.0.9"
+appdirs = "^1.4.4"
+idna = "^3.4"
+httpcore = "^0.17.0"
+httpx = "^0.24.0"
+starlette = "^0.26.1"
+requests = "^2.30.0"
+loguru = "^0.7.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
