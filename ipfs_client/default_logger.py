@@ -6,8 +6,6 @@ from loguru import logger
 FORMAT = '{time:MMMM D, YYYY > HH:mm:ss!UTC} | {level} | {message}| {extra}'
 
 
-logger.remove(0)
-
 logger.add(sys.stdout, level='DEBUG', format=FORMAT)
 logger.add(sys.stderr, level='WARNING', format=FORMAT)
 logger.add(
