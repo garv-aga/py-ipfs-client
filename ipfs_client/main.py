@@ -15,7 +15,7 @@ import asyncio
 
 class AsyncIPFSClient:
     _settings: IPFSConfig
-    
+    _client: AsyncClient
     def __init__(
             self,
             addr,
@@ -31,27 +31,28 @@ class AsyncIPFSClient:
             self._base_url = urljoin(addr, api_base)
             self._host_numeric = addr_util.P_TCP
         self.dag = None
-        self._client = None
         self._logger = logger.bind(module='IPFSAsyncClient')
         self._settings = settings
 
     async def init_session(self):
-        if not self._client:
-            self._async_transport = AsyncHTTPTransport(
-                limits=Limits(
-                    max_connections=self._settings.connection_limits.max_connections, 
-                    max_keepalive_connections=self._settings.connection_limits.max_connections, 
-                    keepalive_expiry=self._settings.connection_limits.keepalive_expiry
-                )
+        self._async_transport = AsyncHTTPTransport(
+            limits=Limits(
+                max_connections=self._settings.connection_limits.max_connections, 
+                max_keepalive_connections=self._settings.connection_limits.max_connections, 
+                keepalive_expiry=self._settings.connection_limits.keepalive_expiry
             )
-            self._client = AsyncClient(
-                base_url=self._base_url,
-                timeout=Timeout(self._settings.timeout),
-                follow_redirects=False,
-                transport=self._async_transport
-            )
-            self.dag = DAGSection(self._client)
-            self._logger.debug('Inited IPFS client on base url {}', self._base_url)
+        )
+        client_init_args = dict(
+            base_url=self._base_url,
+            timeout=Timeout(self._settings.timeout),
+            follow_redirects=False,
+            transport=self._async_transport
+        )
+        if self._settings.url_auth:
+            client_init_args.update({'auth': (self._settings.url_auth.apiKey, self._settings.url_auth.apiSecret)})
+        self._client = AsyncClient(**client_init_args)
+        self.dag = DAGSection(self._client)
+        self._logger.debug('Inited IPFS client on base url {}', self._base_url)
 
     def add_str(self, string, **kwargs):
         # TODO
