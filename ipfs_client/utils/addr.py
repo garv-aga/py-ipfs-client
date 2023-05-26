@@ -7,7 +7,8 @@ import multiaddr.exceptions
 from ipfs_client.exceptions import AddressError
 import typing as ty
 import socket
-import urllib
+import urllib.parse
+import validators
 
 
 
@@ -73,3 +74,7 @@ def multiaddr_to_url_data(
     ).geturl()
 
     return base_url, host_numeric
+
+
+def is_valid_url(url):
+    return validators.url(url)

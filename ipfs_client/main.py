@@ -1,6 +1,8 @@
 import sys
 import os
-
+from urllib.parse import urljoin, urlparse
+import ipfs_client
+import ipfs_client.exceptions
 import ipfs_client.utils.addr as addr_util
 from ipfs_client.default_logger import logger
 from ipfs_client.dag import DAGSection
@@ -21,7 +23,13 @@ class AsyncIPFSClient:
             api_base='api/v0'
 
     ):
-        self._base_url, self._host_numeric = addr_util.multiaddr_to_url_data(addr, api_base)
+        try:
+            self._base_url, self._host_numeric = addr_util.multiaddr_to_url_data(addr, api_base)
+        except ipfs_client.exceptions.AddressError as error:
+            if not addr_util.is_valid_url(addr):
+                raise ValueError('Invalid IPFS address')
+            self._base_url = urljoin(addr, api_base)
+            self._host_numeric = addr_util.P_TCP
         self.dag = None
         self._client = None
         self._logger = logger.bind(module='IPFSAsyncClient')
