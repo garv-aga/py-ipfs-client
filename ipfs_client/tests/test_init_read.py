@@ -4,7 +4,7 @@ from ipfs_client.settings.data_models import ConnectionLimits, ExternalAPIAuth, 
 
 
 # run this test as:
-# IPFS_URL=http://localhost:5001 IPFS_AUTH_API_KEY=your_api_key IPFS_AUTH_API_SECRET=your_api_secret poetry run python -m ipfs_client.tests.test_init_read
+# IPFS_URL=https://ipfs.infura.io:5001 IPFS_AUTH_API_KEY=your_api_key IPFS_AUTH_API_SECRET=your_api_secret poetry run python -m ipfs_client.tests.test_init_read
 
 async def test_read_from_cid():
     ipfs_url = os.getenv('IPFS_URL', 'http://localhost:5001')
