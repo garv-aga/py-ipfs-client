@@ -1,21 +1,22 @@
-from multiaddr.protocols import (
-    P_DNS, P_DNS4, P_DNS6,  # type: ignore[import]
-    P_HTTP, P_HTTPS, P_IP4, P_IP6, P_TCP, P_UNIX
-)
-import multiaddr
-import multiaddr.exceptions
-from ipfs_client.exceptions import AddressError
-import typing as ty
 import socket
-import urllib
+import urllib.parse
 
+import multiaddr.exceptions
+import validators
+from multiaddr.protocols import P_HTTP
+from multiaddr.protocols import P_HTTPS
+from multiaddr.protocols import P_IP4
+from multiaddr.protocols import P_IP6
+from multiaddr.protocols import P_TCP
+
+from ipfs_client.exceptions import AddressError
 
 
 AF_UNIX = getattr(socket, 'AF_UNIX', NotImplemented)
 
 
 def multiaddr_to_url_data(
-        addr, base: str  # type: ignore[no-any-unimported]
+        addr, base: str,  # type: ignore[no-any-unimported]
 ):
     try:
         multi_addr = multiaddr.Multiaddr(addr)
@@ -73,3 +74,7 @@ def multiaddr_to_url_data(
     ).geturl()
 
     return base_url, host_numeric
+
+
+def is_valid_url(url):
+    return validators.url(url)

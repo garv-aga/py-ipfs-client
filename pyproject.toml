@@ -18,6 +18,8 @@ httpx = "^0.24.0"
 starlette = "^0.26.1"
 requests = "^2.30.0"
 loguru = "^0.7.0"
+validators = "^0.20.0"
+pydantic = "^1.10.8"
 
 
 [build-system]
