@@ -1,5 +1,7 @@
 from typing import Optional
+
 from pydantic import BaseModel
+
 
 class ConnectionLimits(BaseModel):
     max_connections: int = 100
@@ -11,10 +13,11 @@ class IPFSWriterRateLimit(BaseModel):
     req_per_sec: int
     burst: int
 
+
 class ExternalAPIAuth(BaseModel):
     # this is most likely used as a basic auth tuple of (username, password)
     apiKey: str
-    apiSecret: str = ""
+    apiSecret: str = ''
 
 
 class IPFSConfig(BaseModel):

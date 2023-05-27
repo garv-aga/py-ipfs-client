@@ -10,7 +10,7 @@ class IPFSAsyncClientError(Exception):
 
     def __str__(self) -> str:
         return self._message
-    
+
     def __repr__(self) -> str:
         return self._message
 
@@ -34,10 +34,12 @@ class DAGSection:
         files = {'': bytes_body}
         r = await self._client.post(
             url=f'/dag/put?pin={str(pin).lower()}',
-            files=files
+            files=files,
         )
         if r.status_code != 200:
-            raise IPFSAsyncClientError(f'IPFS client error: dag-put operation, response:{r}')
+            raise IPFSAsyncClientError(
+                f'IPFS client error: dag-put operation, response:{r}',
+            )
         try:
             return json.loads(r.text)
         except json.JSONDecodeError:
@@ -47,6 +49,8 @@ class DAGSection:
 
         response = await self._client.post(url=f'/dag/get?arg={dag_cid}')
         if response.status_code != 200:
-            raise IPFSAsyncClientError(f'IPFS client error: dag-get operation, response:{response}')
+            raise IPFSAsyncClientError(
+                f'IPFS client error: dag-get operation, response:{response}',
+            )
 
         return DAGBlock(response.text)

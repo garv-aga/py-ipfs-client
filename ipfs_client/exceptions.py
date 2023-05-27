@@ -8,7 +8,8 @@ class Error(Exception):
     __slots__ = ()
 
 
-class AddressError(Error, multiaddr.exceptions.Error):  # type: ignore[no-any-unimported, misc]
+# type: ignore[no-any-unimported, misc]
+class AddressError(Error, multiaddr.exceptions.Error):
     """Raised when the provided daemon location Multiaddr does not match any
     of the supported patterns."""
     __slots__ = ('addr',)
@@ -17,4 +18,6 @@ class AddressError(Error, multiaddr.exceptions.Error):  # type: ignore[no-any-un
 
     def __init__(self, addr: ty.Union[str, bytes]) -> None:
         self.addr = addr
-        Error.__init__(self, 'Unsupported Multiaddr pattern: {0!r}'.format(addr))
+        Error.__init__(
+            self, 'Unsupported Multiaddr pattern: {0!r}'.format(addr),
+        )
