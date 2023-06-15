@@ -1,3 +1,4 @@
+import io
 import os
 
 from ipfs_client.main import AsyncIPFSClientSingleton
@@ -10,9 +11,9 @@ from ipfs_client.settings.data_models import IPFSWriterRateLimit
 # run this test as:
 # IPFS_URL=https://ipfs.infura.io:5001 IPFS_AUTH_API_KEY=your_api_key
 # IPFS_AUTH_API_SECRET=your_api_secret poetry run python -m
-# ipfs_client.tests.init_read_test
+# ipfs_client.tests.init_read_bytes_test /path/to/binary/file
 
-async def test_read_from_cid():
+async def test_upload_read_binary(binary_file_path):
     ipfs_url = os.getenv('IPFS_URL', 'http://localhost:5001')
     ipfs_auth_api_key = os.getenv('IPFS_AUTH_API_KEY', None)
     ipfs_auth_api_secret = os.getenv('IPFS_AUTH_API_SECRET', None)
@@ -43,12 +44,15 @@ async def test_read_from_cid():
         settings=ipfs_client_settings,
     )
     await ipfs_client.init_sessions()
-    cid = await ipfs_client._ipfs_write_client.add_json({'test': 'test'})
+    file_contents = io.open(binary_file_path, 'rb').read()
+    cid = await ipfs_client._ipfs_write_client.add_bytes(file_contents)
     print(cid)
-    data = await ipfs_client._ipfs_read_client.get_json(cid)
+    data = await ipfs_client._ipfs_read_client.cat(cid, bytes_mode=True)
     print(data)
 
 
 if __name__ == '__main__':
     import asyncio
-    asyncio.run(test_read_from_cid())
+    import sys
+    binary_file_upload_path = sys.argv[1]
+    asyncio.run(test_upload_read_binary(binary_file_upload_path))
