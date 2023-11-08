@@ -6,12 +6,14 @@ from ipfs_client.settings.data_models import ConnectionLimits
 from ipfs_client.settings.data_models import ExternalAPIAuth
 from ipfs_client.settings.data_models import IPFSConfig
 from ipfs_client.settings.data_models import IPFSWriterRateLimit
+from ipfs_client.settings.data_models import RemotePinningConfig
 
 
 # run this test as:
 # IPFS_URL=https://ipfs.infura.io:5001 IPFS_AUTH_API_KEY=your_api_key
 # IPFS_AUTH_API_SECRET=your_api_secret poetry run python -m
 # ipfs_client.tests.init_read_bytes_test /path/to/binary/file
+
 
 async def test_upload_read_binary(binary_file_path):
     ipfs_url = os.getenv('IPFS_URL', 'http://localhost:5001')
@@ -30,6 +32,12 @@ async def test_upload_read_binary(binary_file_path):
             max_keepalive_connections=5,
             keepalive_expiry=60,
         ),
+        remote_pinning=RemotePinningConfig(
+            enabled=False,
+            service_name='',
+            service_endpoint='',
+            service_token='',
+        ),
     )
     if all([ipfs_auth_api_key, ipfs_auth_api_secret]):
         ipfs_client_settings.url_auth = ExternalAPIAuth(
@@ -47,7 +55,7 @@ async def test_upload_read_binary(binary_file_path):
     file_contents = io.open(binary_file_path, 'rb').read()
     cid = await ipfs_client._ipfs_write_client.add_bytes(file_contents)
     print(cid)
-    data = await ipfs_client._ipfs_read_client.cat(cid, bytes_mode=True)
+    data = await ipfs_client._ipfs_read_client.cat(cid, bytes_mode=False)
     print(data)
 
 

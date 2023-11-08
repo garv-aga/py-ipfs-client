@@ -20,6 +20,14 @@ class ExternalAPIAuth(BaseModel):
     apiSecret: str = ''
 
 
+class RemotePinningConfig(BaseModel):
+    enabled: bool
+    service_name: Optional[str] = ""
+    service_endpoint: Optional[str] = ""
+    service_token: Optional[str] = ""
+    background_pinning: Optional[bool] = False
+
+
 class IPFSConfig(BaseModel):
     url: str
     url_auth: Optional[ExternalAPIAuth] = None
@@ -29,3 +37,4 @@ class IPFSConfig(BaseModel):
     timeout: int
     local_cache_path: str
     connection_limits: ConnectionLimits
+    remote_pinning: RemotePinningConfig

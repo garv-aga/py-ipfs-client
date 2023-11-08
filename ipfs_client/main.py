@@ -23,6 +23,7 @@ class AsyncIPFSClient:
             addr,
             settings: IPFSConfig,
             api_base='api/v0',
+            write_mode=False,
 
     ):
         try:
@@ -38,6 +39,7 @@ class AsyncIPFSClient:
         self.dag = None
         self._logger = logger.bind(module='IPFSAsyncClient')
         self._settings = settings
+        self._write_mode = write_mode
 
     async def init_session(self):
         conn_limits = self._settings.connection_limits
@@ -64,6 +66,54 @@ class AsyncIPFSClient:
                 },
             )
         self._client = AsyncClient(**client_init_args)
+
+        if self._settings.remote_pinning.enabled and self._write_mode:
+            # checking if service_name, service_endpoint, and service_token are
+            # set, if not, raise an error
+            if not all(
+                    [
+                        self._settings.remote_pinning.service_name,
+                        self._settings.remote_pinning.service_endpoint,
+                        self._settings.remote_pinning.service_token,
+                    ],
+            ):
+                raise ValueError(
+                    'Remote pinning enabled but service_name, service_endpoint, or service_token not set',
+                )
+
+            # curl -X POST "http://127.0.0.1:5001/api/v0/pin/remote/service/add?arg=<service>&arg=<endpoint>&arg=<key>"
+            # enable remote pinning service
+            r = await self._client.post(
+                url=f'/pin/remote/service/add?arg={self._settings.remote_pinning.service_name}&arg={self._settings.remote_pinning.service_endpoint}&arg={self._settings.remote_pinning.service_token}',
+            )
+            if r.status_code != 200:
+                if r.status_code == 500:
+                    # check for {"Message":"service already present","Code":0,"Type":"error"}
+                    try:
+                        resp = json.loads(r.text)
+                    except json.JSONDecodeError:
+                        raise IPFSAsyncClientError(
+                            f'IPFS client error: remote pinning service add operation, response:{r}',
+                        )
+                    else:
+                        if resp['Message'] == 'service already present':
+                            self._logger.debug(
+                                'Remote pinning service already present',
+                            )
+                            pass
+                        else:
+                            raise IPFSAsyncClientError(
+                                f'IPFS client error: remote pinning service add operation, response:{r}',
+                            )
+                else:
+                    raise IPFSAsyncClientError(
+                        f'IPFS client error: remote pinning service add operation, response:{r}',
+                    )
+            else:
+                self._logger.debug(
+                    'Remote pinning service added successfully',
+                )
+
         self.dag = DAGSection(self._client)
         self._logger.debug('Inited IPFS client on base url {}', self._base_url)
 
@@ -87,7 +137,20 @@ class AsyncIPFSClient:
         except json.JSONDecodeError:
             return r.text
         else:
-            return resp['Hash']
+            generated_cid = resp['Hash']
+
+        if self._settings.remote_pinning.enabled:
+            # curl -X POST "http://127.0.0.1:5001/api/v0/pin/remote/add?arg=<ipfs-path>&service=<value>&name=<value>&background=false"
+            # pin to remote pinning service
+            r = await self._client.post(
+                url=f'/pin/remote/add?arg={generated_cid}&service={self._settings.remote_pinning.service_name}&background={self._settings.remote_pinning.background_pinning}',
+            )
+            if r.status_code != 200:
+                raise IPFSAsyncClientError(
+                    f'IPFS client error: remote pinning add operation, response:{r}',
+                )
+
+        return generated_cid
 
     async def add_json(self, json_obj, **kwargs):
         try:
@@ -134,10 +197,10 @@ class AsyncIPFSClient:
 class AsyncIPFSClientSingleton:
     def __init__(self, settings: IPFSConfig):
         self._ipfs_write_client = AsyncIPFSClient(
-            addr=settings.url, settings=settings,
+            addr=settings.url, settings=settings, write_mode=True,
         )
         self._ipfs_read_client = AsyncIPFSClient(
-            addr=settings.reader_url, settings=settings,
+            addr=settings.reader_url, settings=settings, write_mode=False,
         )
         self._initialized = False
 
