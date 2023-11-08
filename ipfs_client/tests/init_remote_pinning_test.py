@@ -17,6 +17,9 @@ async def test_read_from_cid():
     ipfs_url = os.getenv('IPFS_URL', 'http://localhost:5001')
     ipfs_auth_api_key = os.getenv('IPFS_AUTH_API_KEY', None)
     ipfs_auth_api_secret = os.getenv('IPFS_AUTH_API_SECRET', None)
+    remote_pinning_service_name = os.getenv('REMOTE_PINNING_SERVICE_NAME', None)
+    remote_pinning_service_endpoint = os.getenv('REMOTE_PINNING_SERVICE_ENDPOINT', None)
+    remote_pinning_service_token = os.getenv('REMOTE_PINNING_SERVICE_TOKEN', None)
     ipfs_client_settings = IPFSConfig(
         url=ipfs_url,
         reader_url=ipfs_url,
@@ -31,10 +34,11 @@ async def test_read_from_cid():
             keepalive_expiry=60,
         ),
         remote_pinning=RemotePinningConfig(
-            enabled=False,
-            service_name='',
-            service_endpoint='',
-            service_token='',
+            enabled=True,
+            service_name=remote_pinning_service_name,
+            service_endpoint=remote_pinning_service_endpoint,
+            service_token=remote_pinning_service_token,
+            background_pinning=False,
         ),
     )
     if all([ipfs_auth_api_key, ipfs_auth_api_secret]):

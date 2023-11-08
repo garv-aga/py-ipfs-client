@@ -14,8 +14,9 @@ from ipfs_client.settings.data_models import RemotePinningConfig
 # IPFS_AUTH_API_SECRET=your_api_secret poetry run python -m
 # ipfs_client.tests.init_read_bytes_test /path/to/binary/file
 
+
 async def test_upload_read_binary(binary_file_path):
-    ipfs_url = os.getenv('IPFS_URL', 'http://localhost:5002')
+    ipfs_url = os.getenv('IPFS_URL', 'http://localhost:5001')
     ipfs_auth_api_key = os.getenv('IPFS_AUTH_API_KEY', None)
     ipfs_auth_api_secret = os.getenv('IPFS_AUTH_API_SECRET', None)
     ipfs_client_settings = IPFSConfig(

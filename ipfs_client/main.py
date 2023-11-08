@@ -23,6 +23,7 @@ class AsyncIPFSClient:
             addr,
             settings: IPFSConfig,
             api_base='api/v0',
+            write_mode=False,
 
     ):
         try:
@@ -38,6 +39,7 @@ class AsyncIPFSClient:
         self.dag = None
         self._logger = logger.bind(module='IPFSAsyncClient')
         self._settings = settings
+        self._write_mode = write_mode
 
     async def init_session(self):
         conn_limits = self._settings.connection_limits
@@ -65,7 +67,7 @@ class AsyncIPFSClient:
             )
         self._client = AsyncClient(**client_init_args)
 
-        if self._settings.remote_pinning.enabled:
+        if self._settings.remote_pinning.enabled and self._write_mode:
             # checking if service_name, service_endpoint, and service_token are
             # set, if not, raise an error
             if not all(
@@ -107,6 +109,10 @@ class AsyncIPFSClient:
                     raise IPFSAsyncClientError(
                         f'IPFS client error: remote pinning service add operation, response:{r}',
                     )
+            else:
+                self._logger.debug(
+                    'Remote pinning service added successfully',
+                )
 
         self.dag = DAGSection(self._client)
         self._logger.debug('Inited IPFS client on base url {}', self._base_url)
@@ -191,10 +197,10 @@ class AsyncIPFSClient:
 class AsyncIPFSClientSingleton:
     def __init__(self, settings: IPFSConfig):
         self._ipfs_write_client = AsyncIPFSClient(
-            addr=settings.url, settings=settings,
+            addr=settings.url, settings=settings, write_mode=True,
         )
         self._ipfs_read_client = AsyncIPFSClient(
-            addr=settings.reader_url, settings=settings,
+            addr=settings.reader_url, settings=settings, write_mode=False,
         )
         self._initialized = False
 
