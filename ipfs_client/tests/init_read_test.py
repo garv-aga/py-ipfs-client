@@ -5,7 +5,7 @@ from ipfs_client.settings.data_models import ConnectionLimits
 from ipfs_client.settings.data_models import ExternalAPIAuth
 from ipfs_client.settings.data_models import IPFSConfig
 from ipfs_client.settings.data_models import IPFSWriterRateLimit
-
+from ipfs_client.settings.data_models import RemotePinningConfig
 
 # run this test as:
 # IPFS_URL=https://ipfs.infura.io:5001 IPFS_AUTH_API_KEY=your_api_key
@@ -13,7 +13,7 @@ from ipfs_client.settings.data_models import IPFSWriterRateLimit
 # ipfs_client.tests.init_read_test
 
 async def test_read_from_cid():
-    ipfs_url = os.getenv('IPFS_URL', 'http://localhost:5001')
+    ipfs_url = os.getenv('IPFS_URL', 'http://localhost:5002')
     ipfs_auth_api_key = os.getenv('IPFS_AUTH_API_KEY', None)
     ipfs_auth_api_secret = os.getenv('IPFS_AUTH_API_SECRET', None)
     ipfs_client_settings = IPFSConfig(
@@ -28,6 +28,12 @@ async def test_read_from_cid():
             max_connections=10,
             max_keepalive_connections=5,
             keepalive_expiry=60,
+        ),
+        remote_pinning=RemotePinningConfig(
+            enabled=False,
+            service_name='',
+            service_endpoint='',
+            service_token='',
         ),
     )
     if all([ipfs_auth_api_key, ipfs_auth_api_secret]):

@@ -25,7 +25,7 @@ class RemotePinningConfig(BaseModel):
     service_name: Optional[str] = ""
     service_endpoint: Optional[str] = ""
     service_token: Optional[str] = ""
-    background_pinning: bool = False
+    background_pinning: Optional[bool] = False
 
 
 class IPFSConfig(BaseModel):
