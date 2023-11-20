@@ -146,10 +146,9 @@ class AsyncIPFSClient:
                 url=f'/pin/remote/add?arg={generated_cid}&service={self._settings.remote_pinning.service_name}&background={self._settings.remote_pinning.background_pinning}',
             )
             if r.status_code != 200:
-                raise IPFSAsyncClientError(
+                self._logger.error(
                     f'IPFS client error: remote pinning add operation, response:{r}',
                 )
-
         return generated_cid
 
     async def add_json(self, json_obj, **kwargs):
