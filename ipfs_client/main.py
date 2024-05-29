@@ -1,10 +1,14 @@
 import json
+from datetime import datetime, timedelta
 from urllib.parse import urljoin
 
 from httpx import AsyncClient
 from httpx import AsyncHTTPTransport
 from httpx import Limits
 from httpx import Timeout
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.date import DateTrigger
 
 import ipfs_client.exceptions
 import ipfs_client.utils.addr as addr_util
@@ -17,6 +21,7 @@ from ipfs_client.settings.data_models import IPFSConfig
 class AsyncIPFSClient:
     _settings: IPFSConfig
     _client: AsyncClient
+    _scheduler: AsyncIOScheduler
 
     def __init__(
             self,
@@ -40,6 +45,8 @@ class AsyncIPFSClient:
         self._logger = logger.bind(module='IPFSAsyncClient')
         self._settings = settings
         self._write_mode = write_mode
+        self._scheduler = AsyncIOScheduler()
+        self._scheduler.start()
 
     async def init_session(self):
         conn_limits = self._settings.connection_limits
@@ -154,6 +161,10 @@ class AsyncIPFSClient:
                 self._logger.error(
                     f'IPFS client error: remote pinning add operation, response:{r}',
                 )
+
+        unpin_delay = 7 * 24 * 60 * 60  # 7 days
+        asyncio.create_task(self.schedule_archive_and_unpin(generated_cid, files, unpin_delay))
+
         return generated_cid
 
     async def add_json(self, json_obj, **kwargs):
@@ -197,6 +208,61 @@ class AsyncIPFSClient:
         except json.JSONDecodeError:
             return json_data
 
+    # Unpin the data using cid
+    async def unpin(self, cid: str): 
+        r = await self._client.post(
+        url=f'/pin/remote/rm?service={self._settings.remote_pinning.service_name}&cid={[cid]}',
+        )
+        if r.status_code != 200:
+            self._logger.error(
+                f'IPFS client error: remote remove pin operation, response:{r}',
+            )    
+
+    # Archive the data to Filecoin via Lighthouse PoDSI, make take up to two days for getting a deal
+    async def archive(self, file: dict[str, bytes]):
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
+                url = 'https://node.lighthouse.storage/api/v0/add',
+                headers = {'Authorization: Bearer': api_key},
+                files = file
+            )
+        if r.status_code != 200:
+            self._logger.error(
+                f'Lighthouse upload error, response:{r}',
+            )
+        try:
+            resp = r.json()
+        except json.JSONDecodeError:
+            return r.text
+        else:
+            archived_cid = resp['data']['Hash']
+            return archived_cid
+
+    # Retrieve the data using Filecoin's native Lassie
+    # Port number: 41443 might change as per your lassie daemon
+    async def retrieve(self, cid, outputfname):
+        url = f'http://127.0.0.1:41443/ipfs/{cid}?filename={output_filename}'
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url)
+        if r.status_code != 200:
+            self._logger.error(
+                f'Lassie retrieve error, response:{r}',
+            )
+    
+    async def schedule_archive_and_unpin(self, cid, file, delay):
+        await asyncio.sleep(delay)
+        self.archive(file)
+        self.unpin(cid)
+
+    # Get prrof that you file was actually uploaded to the Filecoin network (PoDSI)
+    async def get_proof(cid):
+        url = f'https://api.lighthouse.storage/api/lighthouse/get_proof?cid={cid}&network=testnet'
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url)
+        if r.status_code != 200:
+            self._logger.error(
+                f'Proof retrieve error, response:{r}',
+            )
 
 class AsyncIPFSClientSingleton:
     def __init__(self, settings: IPFSConfig):
