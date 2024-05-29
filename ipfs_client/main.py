@@ -117,10 +117,15 @@ class AsyncIPFSClient:
         self.dag = DAGSection(self._client)
         self._logger.debug('Inited IPFS client on base url {}', self._base_url)
 
-    def add_str(self, string, **kwargs):
-        # TODO
-        pass
-
+    async def add_str(self, string, **kwargs):
+        try: 
+            string_data = string.encode('utf-8')
+        except Exception as e:
+            raise e
+        
+        cid = await self.add_bytes(string_data, **kwargs)
+        return cid
+    
     async def add_bytes(self, data: bytes, **kwargs):
         files = {'': data}
         r = await self._client.post(
