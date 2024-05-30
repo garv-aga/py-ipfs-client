@@ -2,10 +2,8 @@
 name = "ifps_client"
 version = "0.1.0"
 description = ""
-authors = ["Powerloom Inc."]
-packages = [
-    { include = "ipfs_client" },
-]
+authors = ["Powerloom Inc.", "Garv Agarwal"]
+packages = [{ include = "ipfs_client" }]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -20,7 +18,7 @@ requests = "^2.30.0"
 loguru = "^0.7.0"
 validators = "^0.20.0"
 pydantic = "^1.10.8"
-
+aiohttp = "^3.8.1"
 
 [build-system]
 requires = ["poetry-core"]
