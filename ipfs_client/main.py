@@ -243,19 +243,22 @@ class AsyncIPFSClient:
             return archived_cid
 
     # Retrieve the data using Filecoin's native Lassie
-    # Port number: 41443 might change as per your lassie daemon
+    # Port number: 36711 might change as per your lassie daemon
     async def retrieve(self, cid, outputfname):
-        url = f'http://127.0.0.1:41443/ipfs/{cid}?filename={outputfname}'
+        url = f'http://127.0.0.1:36711/ipfs/{cid}?filename={outputfname}'
         async with httpx.AsyncClient() as client:
             r = await client.get(url)
-        if r.status_code != 200:
-            self._logger.error(
-                f'Lassie retrieve error, response:{r}',
-            )
+            if r.status_code != 200:
+                self._logger.error(
+                    f'Lassie retrieve error, response:{r}',
+                )
+            with open(outputfname, 'wb') as f:
+                f.write(r.content)
+        self._logger.info(f"Successfully retrieved and saved file {outputfname}")
     
     async def schedule_archive_and_unpin(self, cid, file, delay):
         await asyncio.sleep(delay)
-        await self.archive(file)
+        #await self.archive(file)
         await self.unpin(cid)
 
     # Get prrof that you file was actually uploaded to the Filecoin network (PoDSI)
@@ -263,11 +266,12 @@ class AsyncIPFSClient:
         url = f'https://api.lighthouse.storage/api/lighthouse/get_proof?cid={cid}&network=testnet'
         async with httpx.AsyncClient() as client:
             r = await client.get(url)
-        if r.error:
+        if r.status_code != 200:
             self._logger.error(
                 f'Proof retrieve error, response:{r}',
             )
-
+        else:
+            return r.json()
 class AsyncIPFSClientSingleton:
     def __init__(self, settings: IPFSConfig):
         self._ipfs_write_client = AsyncIPFSClient(
